@@ -1,0 +1,125 @@
+#trait mapping with DASH clade phylogeny
+#extent of fire and length of the sessile spikelet awn
+
+library(readr)
+Kurt_awn_morphometrics <- read_csv("Kurt_awn_morphometrics.csv")
+
+DASH_tree <- "DASH_500_23_06_2022.tree" 
+library(ape)
+tree = read.tree("DASH_500_23_06_2022.tree") #reads in nexus format
+DASH_tree <- tree
+
+?`ape-package`
+
+#plot.phylo(DASH_tree, font = 1, no.margin = TRUE)
+
+library(phytools)
+library(geiger)
+
+plotTree(DASH_tree, ftype = "i", fsize = 0.3, lwd=0.5, axes = FALSE, cex=0.5)
+
+library(tidyverse)
+
+DASH_latlong <- read.csv("tree-lat-long.csv")
+ss_awn_fire_traits <- read.csv("ss_awn_fire_traits.csv")
+DASH_fire_pruned_data <- read.csv("DASH_fire_trait_pruned.csv", header = TRUE, row.names=1)
+DASH_fire_full_data <- read.csv("DASH_fire_trait_full.csv", header = TRUE, row.names = 1)
+DASH_tree
+head(DASH_fire_pruned_data)
+dim(DASH_fire_pruned_data)
+chk <- name.check(DASH_tree, DASH_fire_pruned_data)
+chk
+
+??treedata
+
+#prune the tree to only have species with fire data
+cleaned.data <- DASH_fire_pruned_data
+pruned.output <- treedata(DASH_tree, cleaned.data)
+pruned.tr <- pruned.output$phy
+plot(pruned.tr, no.margin=TRUE, cex=0.5)
+
+
+DASH_fire_pruned_data <- read.csv("DASH_fire_trait_pruned.csv", header = TRUE, row.names = 1)
+
+chk <- name.check(pruned.tr, DASH_fire_pruned_data)
+chk
+
+data <-setNames(DASH_fire_pruned_data$burned.mean.log,rownames(DASH_fire_pruned_data))
+DASH_fire_pruned_contMap <- contMap(pruned.tr, data, plot=FALSE, lims = c(1,14))
+#plot(DASH_fire_pruned_contMap)
+#DASH_fire_pruned_contMap <- setMap(DASH_fire_pruned_contMap, c("red", "green", "blue"))
+plot(DASH_fire_pruned_contMap, sig=2, fsize=c(0.5,0.7), lwd=c(1), leg.txt="burned.mean.log")
+
+#Geometric awn and spikelet ratio
+awn_spikelet_ratio_pruned <- read.csv("awn_spikelet_ratio_pruned.csv", header = TRUE, row.names = 1)
+chk <- name.check(pruned.tr, awn_spikelet_ratio_pruned)
+chk
+
+#prune the tree to only have species with awn and spikelet ratio
+pruned.output <- treedata(DASH_tree, awn_spikelet_ratio_pruned)
+pruned.tr <- pruned.output$phy
+plot(pruned.tr, no.margin=TRUE, cex=0.5)
+
+chk <- name.check(pruned.tr, awn_spikelet_ratio_pruned)
+chk
+
+data <- setNames(awn_spikelet_ratio_pruned$geometric.awn.to.spikelet.ratio, rownames(awn_spikelet_ratio_pruned))
+awn_spikelet_ratio_contMap <- contMap(pruned.tr, data, plot = FALSE)
+awn_spikelet_ratio_contMap <- setMap(awn_spikelet_ratio_contMap, c("red", "green", "blue"))
+plot(awn_spikelet_ratio_contMap, sig=2, fsize=c(0.5,0.7), lwd=c(1), leg.txt="geometric.awn.to.spikelet.ratio")
+#plot(awn_spikelet_ratio_contMap, sig=2, fsize=c(0.5,0.7), lwd=c(1), leg.txt="geometric.awn.to.spikelet.ratio")
+
+#sessile spikelet length mm
+SS_length <- read.csv("SS_length_mm.csv", header = TRUE, row.names = 1)
+chk <- name.check(pruned.tr, SS_length)
+chk
+pruned.output <- treedata(DASH_tree, SS_length)
+pruned.tr <- pruned.output$phy
+plot(pruned.tr, no.margin = TRUE, cex=0.5)
+chk <- name.check(pruned.tr, SS_length)
+chk
+
+data <- setNames(SS_length$sessile.spikelet.length.mm, rownames(SS_length))
+SS_length_contMap <- contMap(pruned.tr, data, plot = FALSE)
+plot(SS_length_contMap, sig=2, fsize=c(0.5,0.7), lwd=c(1), leg.txt="SS.length.mm")
+
+#sessile spikelet awn 1 length mm
+SS_awn1_length <- read.csv("SS_awn1_length.csv", header = TRUE, row.names = 1)
+pruned.output <- treedata(DASH_tree, SS_awn1_length)
+pruned.tr <- pruned.output$phy
+plot(pruned.tr, no.margin = TRUE, cex=0.5)
+chk <- name.check(pruned.tr, SS_awn1_length)
+chk
+
+data <- setNames(SS_awn1_length$sessile.spikelet.awn1.length.mm, rownames(SS_awn1_length))
+SS_awn1_length_contMap <- contMap(pruned.tr, data, plot = FALSE)
+plot(SS_awn1_length_contMap, sig=2, fsize=c(0.5,0.7), lwd=c(1), leg.txt="SS.awn1.length.mm")
+
+#run fire data excluding the 2 outliers
+fire_species_remv <- read.csv("DASH_fire_acap_aaeq_remv.csv", header = TRUE, row.names = 1)
+pruned.output <- treedata(DASH_tree, fire_species_remv)
+pruned.tr <- pruned.output$phy
+plot(pruned.tr, no.margin=TRUE, cex=0.5)
+chk <- name.check(pruned.tr, fire_species_remv)
+chk
+
+data <- setNames(fire_species_remv$burned.mean.log, rownames(fire_species_remv))
+fire_species_remv_contMap <- contMap(pruned.tr, data, plot = FALSE)
+plot(fire_species_remv_contMap, sig=2, fsize=c(0.5,0.7), lwd=c(1), leg.txt="burned.mean.log")
+
+#estimate ancestral states using fastAnc
+#fitBM <- anc.ML(pruned.tr, DASH_fire_pruned_data, model = "BM")
+
+
+#continuous character mapping with pruned data and tree
+#DASH_fire_pruned_contMap <- contMap(pruned.tr, DASH_fire_pruned_data, plot=FALSE, lims = c(2.7,5.8))
+
+#try with full tree and full data using anc.ML method but first take off row.names of csv file
+#DASH_fire_full_data <- read.csv("DASH_fire_trait_full.csv", header = TRUE)
+#DASH_fire_contMap <- contMap(DASH_tree, DASH_fire_full_data$burned.mean.log, method = "anc.ML", plot = FALSE, lims = c(2.7,5.8))
+
+#change color gradient to custom gradient
+#DASH_contMap <- setMap(DASH_contMap, c("white", "orange", "black"))
+#plot contMap object
+#plot(DASH_contMap, sig=2, fsize=c(0.4,0.7),
+     #lwd=c(2,3), leg.txt="burned.mean.log")
