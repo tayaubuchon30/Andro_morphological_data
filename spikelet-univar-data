@@ -1,0 +1,869 @@
+---
+title: "Spikelet image data"
+output: html_notebook
+---
+
+```{r}
+full_spikelet_data <- read.csv("imaging measurement data (Andropogoneae).csv")
+
+NA_spikelet_data <- read.csv("NA_specimen_data.csv")
+
+library(ggplot2)
+
+#column chart for average awn length for each species
+
+ggplot(NA_spikelet_data, aes(x=SpecimenID, y=SessileSpikeletAwnLength, fill=SpecimenID)) + stat_summary(fun=mean, geom="bar")
+
+#main statistical indicators for awn length by SpecimenID
+library(doBy)
+func <- function(x) {descStat(x, na.rm = TRUE)}
+NA_specimen_summary <- summaryBy(SessileSpikeletAwnLength~SpecimenID, data = NA_spikelet_data, FUN=func)
+write.csv(NA_specimen_summary, file = "NA_specimen_summary.csv")
+#column chart
+ggplot(NA_spikelet_data, aes(x=SpecimenID, y=SessileSpikeletAwnLength, fill=SpecimenID)) + stat_summary(fun=mean, geom="bar")
+#histogram for the variable (x) SessileSpikeletAwnLength
+#ggplot() + geom_histogram(data = NA_spikelet_data, aes(x=SessileSpikeletAwnLength), fill="gray", color="black")
+
+#mean plot chart representing average SessileSpikeletAwnLength for each SpecimenID
+agg_NA_data <- aggregate(NA_spikelet_data$SessileSpikeletAwnLength, by=list(NA_spikelet_data$SpecimenID), FUN=mean)
+ggplot() + geom_line(data=agg_NA_data, aes(x=(1:18), y=x)) + 
+  scale_x_discrete(name="specimenID") + scale_y_continuous(name="SessileSpikeletAwnLength", limits = c(1,62))
+
+#clustered scatterplot by specimenID
+lgd <- NA_spikelet_data$SpecimenID
+
+
+
+#pull in data just of Hyparrhenia and Schizachyrium
+hyp_sch_data <- read.csv("hyp_sch_data.csv")
+
+#main statistical indicators for the variable awn length by SpecimenID
+library(doBy)
+func <- function(x) {descStat(x, na.rm = TRUE)}
+hyp_sch_summary <- summaryBy(SessileSpikeletAwnLength~SpecimenID, data=hyp_sch_data, FUN=func)
+
+#mean plot chart for average awn length by specimenid
+
+aggdata <- aggregate(hyp_sch_summary$SessileSpikeletAwnLength.mean, by=list(hyp_sch_summary$SpecimenID), FUN=mean)
+
+View(aggdata)
+
+ggplot() + geom_line(data=aggdata, aes(x=(1:14), y=aggdata$x)) +
+  scale_x_discrete(name="SpecimenID", labels="SpecimenID")+
+  scale_y_continuous(name="SessileSpikeletAwnLength.mean", limits = c(0,30))
+
+#column chart
+ggplot(aggdata, aes(x=x, y=Group.1, fill=x)) + stat_summary(fun.y = mean, geom = "bar")
+
+write.csv(hyp_sch_summary, file = "hyp_sch_summary.csv")
+
+
+#main statistical indicators for the variable awn length by SpecimenID
+#library(doBy)
+#func <- function(x) {descStat(x, na.rm = TRUE)}
+#full_set_awn_summary <- summaryBy(SessileSpikeletAwnLength~SpecimenID, data = full_spikelet_data, FUN = func) #error
+
+#write.csv(full_set_awn_summary, file = "full_set_awn_summary.csv")
+
+#correlation matrix
+#NA_dataset <- cor(NA_spikelet_data, method = "pearson", use = "complete.obs", )
+NA_dataset_cor <- cor(subset(NA_spikelet_data[ c("SessileSpikeletLength", "SessileSpikeletAwnLength")], method = "pearson", use = "complete.obs"))
+#covariance matrix
+NA_dataset_cov <- cov(subset(NA_spikelet_data[ c("SessileSpikeletLength", "SessileSpikeletAwnLength")], method = "pearson", use = "complete.obs"))
+
+print(NA_dataset_cor)
+print(NA_dataset_cov)
+
+
+```
+
+```{r}
+#compute main statistical indicators for numeric variables with psych package
+#create matrix with the variables of interest
+
+NA_stats <- cbind(NA_spikelet_data$Filename, NA_spikelet_data$SpecimenID, NA_spikelet_data$SessileSpikeletLength, NA_spikelet_data$SessileSpikeletAwnLength, NA_spikelet_data$Pedicellate1SpikeletLength, NA_spikelet_data$Pedicellate1SpikeletAwnLength, NA_spikelet_data$Pedicel1Length, NA_spikelet_data$Pedicellate2SpikeletLength, NA_spikelet_data$Pedicellate2SpikeletAwnLength, NA_spikelet_data$Pedicel2Length, NA_spikelet_data$InternodeLength)
+
+colnames(NA_stats) <- c("filename", "specimenID", "SSLength", "SSAwnLength", "PS1Length", "PS1AwnLength", "Ped1Length", "PS2Length", "PS2AwnLength", "Ped2Length", "InternodeLength")
+View(NA_stats)
+
+library(doBy)
+  func<-function(x) {descStat(x, na.rm = TRUE)}
+
+summaryBy(SessileSpikeletLength~filename, data=NA_spikelet_data, FUN=func)
+
+NA_specimen_summaryby <- summaryBy(SessileSpikeletLength+SessileSpikeletAwnLength+Pedicellate1SpikeletLength+Pedicellate1SpikeletAwnLength+Pedicel1Length+Pedicellate2SpikeletLength+Pedicellate2SpikeletAwnLength+Pedicel2Length+InternodeLength~Filename +SpecimenID, data=NA_spikelet_data, FUN=func)
+
+View(NA_specimen_summaryby)
+write.csv(NA_specimen_summaryby, file="NA_specimen_summaryBy.csv")
+```
+
+```{r}
+#May 5, 2023
+#means analysis for Kellogg dataset
+
+KelloggSpikeData <- read.csv("Copy_Imaging_measurement_data.csv")
+
+library(doBy)
+  func<-function(x) {descStat(x, na.rm=TRUE)}
+  
+  summaryBy(SessileSpikeletLength~Filename, data = KelloggSpikeData, FUN=func)
+  
+  KelloggData_summary <- summaryBy(SessileSpikeletLength+SessileSpikeletAwnLength+Pedicellate1SpikeletLength+Pedicellate1SpikeletAwnLength+Pedicel1Length+Pedicellate2SpikeletLength+Pedicellate2SpikeletAwnLength+Pedicel2Length+InternodeLength~Filename +SpecimenID+Genus+species+collector+CollectorNum, data=KelloggSpikeData, FUN=func)
+  
+  write.csv(KelloggData_summary, file="KelloggData_summaryBy.csv")
+```
+
+```{r}
+#May 8 2023
+#means analysis for McAllister dataset
+
+McallisterSpikeData <- read.csv("McAllister_data.csv")
+
+library(doBy)
+func<-function(x) {descStat(x, na.rm=TRUE)}
+
+test<-summaryBy(SessileSpikeletLength~DissectedImageUsed, data=McallisterSpikeData, FUN = func)
+View(test)
+
+McAllisterData_summaryBy <- summaryBy(SessileSpikeletLength+SessileSpikeletAwn1Length+PedicellateSpikelet1Length+PedicellateSpikelet1Awn1Length+PedicellateSpikelet1Awn2Length+Pedicel1Length+InternodeRachisLength~DissectedImageUsed+Species+Collector+CollectorNumber+SpeciesAbbreviation, data=McallisterSpikeData, FUN=func)
+
+
+head(McAllisterData_summaryBy)
+
+write.csv(McAllisterData_summaryBy, file = "McAllisterData_summaryBy.csv")
+```
+
+```{r}
+#May 8 2023
+#exploratory data analysis with aggregated data
+#univariate - bivariate - multivariate
+#bivariate plot of all means
+
+AggregatedMeansData <- read.csv("Kellogg_McAllister_means_aggregated.csv")
+
+library(ggplot2)
+library(tidyverse)
+
+summary(AggregatedMeansData)
+
+CorrMatrixAggregated <- cor(AggregatedMeansData[8:13], use = "pairwise.complete.obs", method = "pearson")
+CovMatrixAggregated <- cov(AggregatedMeansData[8:13], use="pairwise.complete.obs", method = "pearson")
+
+pairs(AggregatedMeansData[8:13], main = "Aggregated Means Data", pch=16, col="gray")
+
+## Euclidean Distance
+# Distances depend on measurements scales so
+# should standardize them
+# scale() function divides each variable by its 
+# standard deviation. Then apply dist() function
+Agg_scale <- dist(scale(AggregatedMeansData[, 
+                        c("SessileSpikeletLength.mean", 
+                          "SessileSpikeletAwnLength.mean", 
+                          "Pedicellate1SpikeletLength.mean",
+                          "Pedicellate1SpikeletAwnLength.mean",
+                          "Pedicel1Length.mean",
+                          "InternodeLength.mean")], 
+                center = FALSE))
+# just show first 12 rounded
+as.dist(round(as.matrix(Agg_scale), 2)[1:12, 1:12])
+cat("...")
+head(Agg_scale)
+view(Agg_scale)
+
+library("mvtnorm")
+
+
+#univariate QQplots for each variable in the dataset
+#using sapply function
+# Probability plots for each separate variable
+layout(matrix(8:13, nc = 3)) #nc number of columns
+# Iterate over all variables with sapply() that
+# loops over variable names 
+# Notice are using an anonymous function as
+# second argument to sapply()
+sapply(names(AggregatedMeansData)[8:13], function(x) {
+  qqnorm(AggregatedMeansData[[x]], main = x)
+  qqline(AggregatedMeansData[[x]])
+})
+
+qqnorm(AggregatedMeansData[,"SessileSpikeletLength.mean"], main = "SessileSpikeletLength.mean")
+?qqnorm
+
+
+library(tidyverse)
+library(ggplot2)
+
+summary(AggregatedMeansData)
+```
+
+```{r}
+plot1 <- ggplot(AggregatedMeansData, aes(x=factor(1),y=SessileSpikeletLength.mean))+theme_bw()+geom_boxplot(width=0.4, fill="blue", alpha=0.2)+geom_jitter(width=0.1, size=1, aes(colour="red"))+
+  geom_hline(yintercept = 6.5, linetype="dashed", color="red")+theme(legend.position = 'none')
+
+
+
+
+#bivariate plots
+ggplot(AggregatedMeansData, aes(y=SessileSpikeletLength.mean, x=InternodeLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(AggregatedMeansData, aes(y=SessileSpikeletAwnLength.mean, x=SessileSpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(AggregatedMeansData, aes(y=Pedicellate1SpikeletLength.mean, x=InternodeLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = InternodeLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(AggregatedMeansData, aes(y=SessileSpikeletLength.mean, x=Pedicellate1SpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+
+```
+
+```{r}
+#16 May 2023
+#reanalyze the outliers from the Kellogg dataset
+
+#first get means for the Kellogg specimens
+#then add into the combined means dataset for both Kellogg + McAllister
+#run the exploratory analyzes 
+
+v2UpdatedKelloggSpikeData <- read.csv("v2Kellogg_updated_data.csv")
+
+library(doBy)
+
+  func<-function(x) {descStat(x, na.rm=TRUE)}
+  
+  summaryBy(SessileSpikeletLength~Filename, data = v2UpdatedKelloggSpikeData, FUN=func)
+  
+  KelloggDataV2_summary <- summaryBy(SessileSpikeletLength+SessileSpikeletAwnLength+Pedicellate1SpikeletLength+Pedicellate1SpikeletAwnLength+Pedicel1Length+Pedicellate2SpikeletLength+Pedicellate2SpikeletAwnLength+Pedicel2Length+InternodeLength~Filename +SpecimenID+Genus+species+collector+CollectorNum, data=v2UpdatedKelloggSpikeData, FUN=func)
+  
+  write.csv(KelloggDataV2_summary, file="v2UpdatedKelloggData_summaryBy.csv")
+
+
+############
+  
+  v2AggregatedMeansData <- read.csv("V2.Kellogg_McAllister_aggregated_means.csv")
+
+library(ggplot2)
+library(tidyverse)
+
+summary(v2AggregatedMeansData)
+
+v2CorrMatrixAggregated <- cor(v2AggregatedMeansData[8:13], use = "pairwise.complete.obs", method = "pearson")
+v2CovMatrixAggregated <- cov(v2AggregatedMeansData[8:13], use="pairwise.complete.obs", method = "pearson")
+
+pairs(v2AggregatedMeansData[8:13], main = "Aggregated Means Data", pch=16, col="gray")
+
+
+sapply(names(v2AggregatedMeansData)[8:13], function(x) {
+  qqnorm(v2AggregatedMeansData[[x]], main = x)
+  qqline(v2AggregatedMeansData[[x]])
+})
+
+
+ggplot(v2AggregatedMeansData, aes(y=SessileSpikeletLength.mean, x=InternodeLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(v2AggregatedMeansData, aes(y=SessileSpikeletAwnLength.mean, x=SessileSpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(v2AggregatedMeansData, aes(y=Pedicellate1SpikeletLength.mean, x=InternodeLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = InternodeLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(v2AggregatedMeansData, aes(y=SessileSpikeletLength.mean, x=Pedicellate1SpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+#view as tibble and remove Dimeria genus
+v2AggregatedMeansData_tibble<- as_tibble(v2AggregatedMeansData)
+view(v2AggregatedMeansData_tibble)
+
+v2MeansSubset_NoDimeria <- v2AggregatedMeansData %>%
+  filter(Genus != 'Dimeria')
+
+ggplot(v2MeansSubset_NoDimeria, aes(y=SessileSpikeletAwnLength.mean, x=SessileSpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(v2MeansSubset_NoDimeria, aes(y=SessileSpikeletLength.mean, x=Pedicellate1SpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+summary(v2MeansSubset_NoDimeria)
+
+sapply(names(v2MeansSubset_NoDimeria)[8:13], function(x) {
+  qqnorm(v2MeansSubset_NoDimeria[[x]], main = x)
+  qqline(v2MeansSubset_NoDimeria[[x]])
+})
+```
+
+```{r}
+#18 May 2023
+#2nd round of outliers run for summaries and put into new bulk analyses
+#Vossia and one Zea specimen with incomplete measurements removed
+
+
+round2Outliers <- read.csv("2nd_round_outliers.csv")
+
+library(doBy)
+
+  func<-function(x) {descStat(x, na.rm=TRUE)}
+  
+  summaryBy(SessileSpikeletLength~Filename, data = round2Outliers, FUN=func)
+  
+  round2_outlier_summary <- summaryBy(SessileSpikeletLength+SessileSpikeletAwnLength+Pedicellate1SpikeletLength+Pedicellate1SpikeletAwnLength+Pedicel1Length+Pedicellate2SpikeletLength+Pedicellate2SpikeletAwnLength+Pedicel2Length+InternodeLength~Filename +SpecimenID+Genus+species+collector+CollectorNum, data=round2Outliers, FUN=func)
+  
+  write.csv(round2_outlier_summary, file="v2UpdatedKelloggData_summaryBy.csv")
+
+#rerun above analyses
+  
+round2v2Aggregated <- read.csv("round2.V2.Kellogg_McAllister_aggregated_means (1).csv")
+
+library(ggplot2)
+library(tidyverse)
+
+summary(round2v2Aggregated)
+
+v2CorrMatrixAggregated <- cor(round2v2Aggregated[8:13], use = "pairwise.complete.obs", method = "pearson")
+v2CovMatrixAggregated <- cov(round2v2Aggregated[8:13], use="pairwise.complete.obs", method = "pearson")
+
+pairs(round2v2Aggregated[8:13], main = "Aggregated Means Data", pch=16, col="gray")
+
+
+sapply(names(round2v2Aggregated)[8:13], function(x) {
+  qqnorm(round2v2Aggregated[[x]], main = x)
+  qqline(round2v2Aggregated[[x]])
+})
+
+ggplot(round2v2Aggregated, aes(y=SessileSpikeletLength.mean, x=InternodeLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(round2v2Aggregated, aes(y=SessileSpikeletAwnLength.mean, x=SessileSpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(round2v2Aggregated, aes(y=Pedicellate1SpikeletLength.mean, x=InternodeLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = InternodeLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(round2v2Aggregated, aes(y=SessileSpikeletLength.mean, x=Pedicellate1SpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+#remove Dimeria
+
+#view as tibble and remove Dimeria genus
+round2v2Aggregated_tibble<- as_tibble(round2v2Aggregated)
+view(round2v2Aggregated_tibble)
+
+v2MeansSubset_NoDimeria <- round2v2Aggregated %>%
+  filter(Genus != 'Dimeria')
+
+ggplot(v2MeansSubset_NoDimeria, aes(y=SessileSpikeletAwnLength.mean, x=SessileSpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(v2MeansSubset_NoDimeria, aes(y=SessileSpikeletLength.mean, x=Pedicellate1SpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+summary(v2MeansSubset_NoDimeria)
+
+sapply(names(v2MeansSubset_NoDimeria)[8:13], function(x) {
+  qqnorm(v2MeansSubset_NoDimeria[[x]], main = x)
+  qqline(v2MeansSubset_NoDimeria[[x]])
+})
+
+```
+
+```{r}
+#25 May 2023
+
+#run more outliers - that had erroneous duplicated values from imageJ
+
+May25Outliers <- read.csv("25MayOutliers.csv")
+
+library(doBy)
+
+  func<-function(x) {descStat(x, na.rm=TRUE)}
+  
+  summaryBy(SessileSpikeletLength~Filename, data = May25Outliers, FUN=func)
+  
+  May25FixedSpecimens_summaryby <- summaryBy(SessileSpikeletLength+SessileSpikeletAwnLength+Pedicellate1SpikeletLength+Pedicellate1SpikeletAwnLength+Pedicel1Length+Pedicellate2SpikeletLength+Pedicellate2SpikeletAwnLength+Pedicel2Length+InternodeLength~Filename +SpecimenID+Genus+species+collector+CollectorNum, data=May25Outliers, FUN=func)
+  
+  write.csv(May25FixedSpecimens_summaryby, file="May25FixedSpecimens_summaryBy.csv")
+  
+  
+v3SpikeletAggMeans <- read.csv("V3.Kellogg_McAllister_aggregated_means.csv")
+
+v3CorrMatrixAggregated <- cor(v3SpikeletAggMeans[8:13], use = "pairwise.complete.obs", method = "pearson")
+v3CovMatrixAggregated <- cov(v3SpikeletAggMeans[8:13], use="pairwise.complete.obs", method = "pearson")
+
+pairs(v3SpikeletAggMeans[8:13], main = "Aggregated Means Data", pch=16, col="gray")
+
+
+sapply(names(v3SpikeletAggMeans)[8:13], function(x) {
+  qqnorm(v3SpikeletAggMeans[[x]], main = x)
+  qqline(v3SpikeletAggMeans[[x]])
+})
+
+
+ggplot(v3SpikeletAggMeans, aes(y=SessileSpikeletLength.mean, x=InternodeLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(v3SpikeletAggMeans, aes(y=SessileSpikeletAwnLength.mean, x=SessileSpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(v3SpikeletAggMeans, aes(y=Pedicellate1SpikeletLength.mean, x=InternodeLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = InternodeLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(v3SpikeletAggMeans, aes(y=SessileSpikeletLength.mean, x=Pedicellate1SpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+
+v3MeansSubset_NoDimeria <- v3SpikeletAggMeans %>%
+  filter(Genus != 'Dimeria')
+
+ggplot(v3MeansSubset_NoDimeria, aes(y=SessileSpikeletAwnLength.mean, x=SessileSpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(v3MeansSubset_NoDimeria, aes(y=SessileSpikeletLength.mean, x=Pedicellate1SpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(v3MeansSubset_NoDimeria, aes(y=SessileSpikeletLength.mean, x=SessileSpikeletAwnLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggplot(v3MeansSubset_NoDimeria, aes(x=SessileSpikeletLength.mean, y=Pedicellate1SpikeletLength.mean)) +
+  theme_bw()+
+  geom_point(aes(color = SessileSpikeletLength.mean), alpha=0.5)+
+  scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+summary(v3MeansSubset_NoDimeria)
+
+sapply(names(v3MeansSubset_NoDimeria)[8:13], function(x) {
+  qqnorm(v3MeansSubset_NoDimeria[[x]], main = x)
+  qqline(v3MeansSubset_NoDimeria[[x]])
+})
+
+#boxplots for each genus and their traits
+#Chrissy's paper figures
+
+#make a blank figure stored into an object named "p"
+p <- ggplot()
+p
+#define the data we're going to use
+p1 <- v3SpikeletAggMeans %>%
+  ggplot()
+p1
+
+ggplot(data = v3SpikeletAggMeans, aes(x = SessileSpikeletLength.mean)) +
+  geom_boxplot()
+
+s1 <- v3SpikeletAggMeans %>%
+  ggplot(aes(y = Genus, x = SessileSpikeletLength.mean)) +
+  geom_boxplot()
+
+s1
+ggsave("ggboxplot_genus_sslength.png", width = 10.91,height = 7.55,plot = s1, dpi = 300)
+
+#order the plots in ascending spikelet value order
+s2 <- v3SpikeletAggMeans %>%
+  ggplot(aes(y = reorder(Genus, SessileSpikeletLength.mean), x = SessileSpikeletLength.mean)) +
+  geom_boxplot() +
+  xlab("SessileSpikeletLength.mean") +
+  ylab("Genus") +
+  ggtitle("Sessile Spikelet Length") +
+  theme_minimal()
+
+s2
+
+library(ggplot2)
+library(dplyr)
+
+# Filter out NA or missing values
+filtered_data <- v3SpikeletAggMeans %>%
+  filter(!is.na(SessileSpikeletLength.mean))
+
+# Create the boxplot with the filtered data
+s3 <- filtered_data %>%
+  ggplot(aes(y = reorder(Genus, SessileSpikeletLength.mean), x = SessileSpikeletLength.mean)) +
+  geom_boxplot() +
+  xlab("SessileSpikeletLength.mean") +
+  ylab("Genus") +
+  ggtitle("Sessile Spikelet Length") +
+  theme_minimal()
+
+s3
+
+#change the outlier shape and color
+s4 <- filtered_data %>%
+  ggplot(aes(y = reorder(Genus, SessileSpikeletLength.mean), x = SessileSpikeletLength.mean)) +
+  geom_boxplot(outlier.shape = 15, outlier.colour = "gray", outlier.fill = "white") +
+  xlab("SessileSpikeletLength.mean") +
+  ylab("Genus") +
+  ggtitle("Sessile Spikelet Length") +
+  theme_bw()
+
+s4
+ggsave("ggboxplot_genus_sslength.png", width = 10.91,height = 9.55,plot = s4, dpi = 300)
+
+
+
+library(dplyr)
+library(ggplot2)
+
+# Calculate the means of 'SessileSpikeletLength.mean' by 'Genus', handling missing values
+SS_mean <- v3SpikeletAggMeans %>%
+  group_by(Genus) %>%
+  summarise(SessileSpikeletLength.mean = mean(SessileSpikeletLength.mean, na.rm = TRUE)) %>%
+  arrange(SessileSpikeletLength.mean)  # Arrange by mean values
+
+# Convert 'Genus' to a factor with ordered levels based on the mean values
+SS_mean$Genus <- factor(SS_mean$Genus, levels = SS_mean$Genus[order(SS_mean$SessileSpikeletLength.mean)])
+
+# Convert to tibble
+SS_mean_tibble <- as_tibble(SS_mean)
+glimpse(SS_mean_tibble)
+# Create the boxplot with the sorted and averaged data
+s2 <- ggplot(SS_mean_tibble, aes(x = SessileSpikeletLength.mean, y = Genus)) +
+  geom_boxplot() +
+  xlab("SessileSpikeletLength.mean") +
+  ylab("Genus") +
+  ggtitle("Sessile Spikelet Length Mean") +
+  theme_minimal()
+
+# Plot the boxplot
+print(s2)
+
+summary(SS_mean_tibble)
+
+# Remove rows with missing values
+SS_mean_tibble_filtered <- na.omit(SS_mean_tibble)
+
+# Create the boxplot with the filtered data
+s2 <- ggplot(SS_mean_tibble_filtered, aes(x = SessileSpikeletLength.mean, y = Genus)) +
+  geom_boxplot() +
+  xlab("SessileSpikeletLength.mean") +
+  ylab("Genus") +
+  ggtitle("Sessile Spikelet Length Mean") +
+  theme_minimal()
+
+# Plot the boxplot
+s2
+#ggsave("ggboxplot_sorted_genus_sslength.png", width = 10.91,height = 8.55,plot = s2, dpi = 300)
+
+
+```
+
+```{r}
+# 30 May 2023
+# Run plotting commands for each variable for all genera with the updated
+# means sheet (Anatherum)
+library(ggplot2)
+library(dplyr)
+
+#start with SS means and then replace the relevant commands with each variable name
+
+May30MeansAgg <- read.csv("V3.Kellogg_McAllister_aggregated_means.csv")
+
+#make a blank figure stored into an object named "p"
+p <- ggplot()
+p
+#define the data we're going to use
+p1 <- May30MeansAgg %>%
+  ggplot()
+p1
+
+ggplot(data = May30MeansAgg, aes(x = InternodeLength.mean)) +
+  geom_boxplot()
+
+s1 <- May30MeansAgg %>%
+  ggplot(aes(y = Genus, x = InternodeLength.mean)) +
+  geom_boxplot()
+s1
+#creates the plot but the genera aren't in order of SS size
+
+#order the plots in ascending spikelet value order
+s2 <- May30MeansAgg %>%
+  ggplot(aes(y = reorder(Genus, InternodeLength.mean), x =InternodeLength.mean)) +
+  geom_boxplot() +
+  xlab("InternodeLength.mean") +
+  ylab("Genus") +
+  ggtitle("Internode Length") +
+  theme_minimal()
+s2
+#remove missing values and NA and change the outlier shape and color
+# Filter out NA or missing values
+filtered_data <- May30MeansAgg %>%
+  filter(!is.na(InternodeLength.mean) & InternodeLength.mean != 0) #conditions for NA values and zero values
+s3 <- filtered_data%>%
+  ggplot(aes(y = reorder(Genus, InternodeLength.mean), x = InternodeLength.mean)) +
+  geom_boxplot(outlier.shape = 15, outlier.colour = "gray", outlier.fill = "white") +
+  xlab("InternodeLength.mean") +
+  ylab("Genus") +
+  ggtitle("Internode Length") +
+  theme_bw()
+s3
+
+#ggsave("30MAy_ggboxplot_genus_sslength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("30MAy_ggboxplot_genus_ssAwnlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("30MAy_ggboxplot_genus_PSlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("30MAy_ggboxplot_genus_PSAwnlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("30MAy_ggboxplot_genus_Pedicellength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("30May_ggboxplot_genus_Internodelength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+
+#ggsave("30MAy_ggboxplot_genus_sslength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("30MAy_ggboxplot_genus_ssAwnlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("30MAy_ggboxplot_genus_PSlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("30MAy_ggboxplot_genus_PSAwnlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("30MAy_ggboxplot_genus_Pedicellength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("30MAy_ggboxplot_genus_Internodelength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+
+```
+
+```{r}
+#June 1 2023
+#same plotting as above except with subtribes added and 0 values removed from the plots
+
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+
+#start with SS means and then replace the relevant commands with each variable name
+
+June1MeansAgg <- read.csv("June1_AggMeansWithSubtribes.csv")
+
+#make a blank figure stored into an object named "p"
+p <- ggplot()
+p
+#define the data we're going to use
+p1 <- June1MeansAgg %>%
+  ggplot()
+p1
+
+ggplot(data = June1MeansAgg, aes(x = SessileSpikeletLength.mean)) +
+  geom_boxplot()
+
+s1 <- June1MeansAgg %>%
+  ggplot(aes(y = Genus, x = SessileSpikeletLength.mean)) +
+  geom_boxplot()
+s1
+#creates the plot but the genera aren't in order size
+
+#order the plots in ascending spikelet value order
+s2 <- June1MeansAgg %>%
+  ggplot(aes(y = reorder(Genus, SessileSpikeletLength.mean), x =SessileSpikeletLength.mean)) +
+  geom_boxplot() +
+  xlab("SessileSpikeletLength.mean") +
+  ylab("Genus") +
+  ggtitle("Sessile Length") +
+  theme_minimal()
+s2
+#remove missing values and NA and change the outlier shape and color
+# Filter out NA or missing values
+filtered_data <- June1MeansAgg %>%
+  filter(!is.na(SessileSpikeletLength.mean) & SessileSpikeletLength.mean != 0) #conditions for NA values and zero values
+s3 <- filtered_data%>%
+  ggplot(aes(y = reorder(Genus, SessileSpikeletLength.mean), x = SessileSpikeletLength.mean, fill=Subtribe)) +
+  geom_boxplot(outlier.shape = 15, outlier.colour = "gray", outlier.fill = "white") +
+  xlab("SessileSpikeletLength.mean") +
+  ylab("Genus") +
+  ggtitle("Sessile Length") +
+  theme_bw()
+s3
+ggsave("color_subtribe_SSlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+
+#ggsave("1June_ggboxplot_genus_sslength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("1June_ggboxplot_genus_ssAwnlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("1June_ggboxplot_genus_PSlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("1June_ggboxplot_genus_PSAwnlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("1June_ggboxplot_genus_Pedicellength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("1June_ggboxplot_genus_Internodelength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+
+######
+#Assign subtribes as y axis instead of genus 
+######
+
+s1 <- June1MeansAgg %>%
+  ggplot(aes(y = Subtribe, x = InternodeLength.mean)) +
+  geom_boxplot()
+s1
+#creates the plot but the genera aren't in order size
+
+#order the plots in ascending spikelet value order
+s2 <- June1MeansAgg %>%
+  ggplot(aes(y = reorder(Subtribe, InternodeLength.mean), x =InternodeLength.mean)) +
+  geom_boxplot() +
+  xlab("InternodeLength.mean") +
+  ylab("Subtribe") +
+  ggtitle("Internode Length") +
+  theme_minimal()
+s2
+#remove missing values and NA and change the outlier shape and color
+# Filter out NA or missing values
+ 
+filtered_data <- June1MeansAgg %>%
+  filter(!is.na(InternodeLength.mean) & InternodeLength.mean != 0) #conditions for NA values and zero values
+s3 <- filtered_data%>%
+  ggplot(aes(y = reorder(Subtribe, InternodeLength.mean), x = InternodeLength.mean)) +
+  geom_boxplot(outlier.shape = 15, outlier.colour = "gray", outlier.fill = "white") +
+  xlab("InternodeLength.mean") +
+  ylab("Subtribe") +
+  ggtitle("Internode Length") +
+  theme_bw()
+s3
+
+#ggsave("subtribes_ggboxplot_genus_sslength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("subtribes_ggboxplot_genus_ssAwnlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("subtribes_ggboxplot_genus_Pslength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("subtribes_ggboxplot_genus_PsAwnlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("subtribes_ggboxplot_genus_Pedicellength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("subtribes_ggboxplot_genus_Internodelength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+
+```
+
+```{r}
+#McAllister plots
+
+#spindle plot
+
+library(ggplot2)
+
+#select just the measurement data for the plot
+AggMeans <- June1MeansAgg
+
+#extract specific columns by their header
+ #AggMeans_long <- AggMeans %>%
+   #pivot_longer(cols = c("SessileSpikeletLength.mean", "SessileSpikeletAwnLength.mean", "Pedicellate1SpikeletLength.mean", "Pedicellate1SpikeletAwnLength.mean", "Pedicel1Length.mean", "InternodeLength.mean"),
+    #            names_to = "Variable",
+     #           values_to = "Value")
+ #head(AggMeans_long)
+ # Prepare data for spindle plot
+spindle_data <- data.frame(
+  X = rep(colnames(AggMeans)[9:14], each = nrow(AggMeans)),
+  Y = as.vector(t(AggMeans[, 9:14]))
+)
+
+spindle_plot <- ggplot(spindle_data) +
+  geom_point(aes(x=X, y=Y), size=2)+
+  ylab("Millimeters")+
+  xlab("Part")+
+theme_classic()
+
+spindle_plot
+
+#add a means line for the plot for each part
+means <- aggregate(Y ~ X, spindle_data, mean)
+
+spindle_plot2 <- ggplot(spindle_data) +
+  geom_point(aes(x=X, y=Y), color="darkgreen", size=1)+
+  #geom_path(aes(x=X, y=Y), color="lightgrey")+
+  geom_point(data=means, aes(x=X, y=Y), color="magenta", size=1)+
+  #geom_hline(data=means, aes(yintercept=Y), color="magenta", linetype="dashed")+
+  theme_bw()
+
+spindle_plot2
+
+#try clustering instead of overlapping points
+spindle_plot3 <- ggplot(spindle_data) +
+  geom_jitter(aes(x=X, y=Y), color="darkgreen", width=0.2, size=0.5)+
+  #geom_path(aes(x=X, y=Y), color="lightgrey")+
+  geom_point(data=means, aes(x=X, y=Y), color="pink", shape=18, size=3, fill="pink")+
+  #geom_hline(data=means, aes(yintercept=Y), color="magenta", linetype="dashed")+
+  ylab("Millimeters")+
+  xlab("Measurement")+
+  theme_bw()
+spindle_plot3
+ggsave("Spindle_plot_means.png", width = 15,height = 9.55,plot = spindle_plot3, dpi = 300)
+
+```
+
+
+```{r}
+#June 6 2023
+#csv now includes clade and subtribes
+
+AggMeans_clades <- read.csv("v3_agg_means_with_clades.csv")
+library(ggplot2)
+library(readxl)
+library(tidyverse)
+library(dplyr)
+
+######
+#Assign clades as y axis instead of genus 
+######
+
+s1 <- AggMeans_clades %>%
+  ggplot(aes(y = Clade, x = SessileSpikeletLength.mean)) +
+  geom_boxplot()
+s1
+#creates the plot but the genera aren't in order size
+
+#order the plots in ascending spikelet value order
+s2 <- AggMeans_clades %>%
+  ggplot(aes(y = reorder(Clade, SessileSpikeletLength.mean), x = SessileSpikeletLength.mean)) +
+  geom_boxplot() +
+  xlab("SessileSpikeletLength.mean") +
+  ylab("Clade") +
+  ggtitle("Sessile Spikelet Length") +
+  theme_minimal()
+s2
+#remove missing values and NA and change the outlier shape and color
+# Filter out NA or missing values
+ 
+filtered_data <- AggMeans_clades %>%
+  filter(!is.na(SessileSpikeletLength.mean) & SessileSpikeletLength.mean != 0) #conditions for NA values and zero values
+s3 <- filtered_data%>%
+  ggplot(aes(y = reorder(Clade, SessileSpikeletLength.mean), x = SessileSpikeletLength.mean)) +
+  geom_boxplot(outlier.shape = 15, outlier.colour = "gray", outlier.fill = "white") +
+  xlab("SessileSpikeletLength.mean") +
+  ylab("Clade") +
+  ggtitle("Sessile Spikelet Length") +
+  theme_bw()
+s3
+
+#ggsave("clades_ggboxplot_genus_sslength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("clades_ggboxplot_genus_ssAwnlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("clades_ggboxplot_genus_Pslength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("clades_ggboxplot_genus_PsAwnlength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("clades_ggboxplot_genus_Pedicellength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+#ggsave("clades_ggboxplot_genus_Internodelength.png", width = 10.91,height = 9.55,plot = s3, dpi = 300)
+```
