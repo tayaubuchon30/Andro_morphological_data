@@ -1,0 +1,358 @@
+#June 14 2023
+#Scatterplot matrix for spikelet data
+DataJune8 <- read.csv("v3_subtribe_sorted.csv")
+
+library(corrplot)
+library(RColorBrewer)
+library(psych)
+library(ggcorrplot)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+head(DataJune8)
+summary(DataJune8)
+
+#convert Clade variable to a factor
+DataJune8$Clade <- as.factor(DataJune8$Clade)
+
+#select numeric values
+numeric_vars <- c("SessileSpikeletLength.mean", "SessileSpikeletAwnLength.mean", "Pedicellate1SpikeletLength.mean", "Pedicellate1SpikeletAwnLength.mean", "Pedicel1Length.mean", "InternodeLength.mean")
+
+scatter_data <- select(DataJune8, Clade, all_of(numeric_vars))
+
+#perform PCA on selected numeric variables not Clade
+pca_result <- prcomp(select(scatter_data, -Clade), scale = TRUE)
+#extract scores from the PCA result
+scores <- as.data.frame(pca_result$x)
+#add the clade variable back to the scores data frame
+scores$Clade <- DataJune8$Clade
+#plot the PCA scores
+plot(scores[, 1], scores[, 2], pch = 16, 
+     xlab = "PC1", ylab = "PC2", main = "PCA Plot")
+
+#### test corrplot functions ####
+
+corrplot1 <- corrplot(cor(scatter_data))
+corrplot2 <- ggcorrplot(cor(scatter_data))
+to_correlate <- scatter_data %>% dplyr::select(SessileSpikeletLength.mean, SessileSpikeletAwnLength.mean, Pedicellate1SpikeletLength.mean, Pedicellate1SpikeletAwnLength.mean, Pedicel1Length.mean, InternodeLength.mean)
+cor(to_correlate)
+cor.test(scatter_data$SessileSpikeletLength.mean, scatter_data$Pedicellate1SpikeletLength.mean)
+ggplot(to_correlate, aes(x=SessileSpikeletLength.mean, y=Pedicellate1SpikeletLength.mean)) +
+  geom_jitter(width = 0.1) +
+  stat_smooth(method = "lm", se=FALSE)
+
+#method from  https://jcoliver.github.io/learn-r/003-intro-multivariate.html
+#PCA
+scatter_data2 <- select(DataJune8, Clade, Subtribe, SessileSpikeletLength.mean, SessileSpikeletAwnLength.mean, Pedicellate1SpikeletLength.mean, Pedicellate1SpikeletAwnLength.mean, Pedicel1Length.mean, InternodeLength.mean)
+
+pca.fit <- prcomp(x = scatter_data2[, -c(1:2)], scale = TRUE)
+pca.summary <- summary(pca.fit)
+ls(pca.summary)
+#We are interested to know (1) what are the important factors that emerge from the PCA (i.e. which ones explain a lot of variation) and (2) what do these factors actually say about the variation observed in our data. For (1), look at the importance object in the summary:
+pca.summary$importance
+
+#plot the PCA
+biplot(x = pca.fit)
+
+# Add a new column to indicate zero values in SessileSpikeletAwnLength.mean
+scatter_data2$ZeroAwn <- ifelse(scatter_data2$SessileSpikeletAwnLength.mean == 0, "Zero Awn Length", "Non-zero Awn Length")
+
+# Plot the PCA biplot
+biplot(x = pca.fit, cex = 0.6) # Use cex to control the size of the points
+
+# Add points with different shapes based on the condition
+points(pca.fit$x[scatter_data2$ZeroAwn == "Zero Awn Length", ], col = "coral1", pch = 1) # For zero values (use a different color and shape)
+#points(pca.fit$x[scatter_data2$ZeroAwn == "Non-zero Awn Length", ], col = "red", pch = 2) # For non-zero values (use a different color and shape)
+
+
+
+
+#pull out clade names from the data as a vector
+clades <- unique(scatter_data2$Clade)
+clades
+legend.colors <- c("aquamarine3", "blue4", "blueviolet", "burlywood", "coral1", "chartreuse3", 
+                   "cyan3", "darkgoldenrod", "darkgreen", "darkred", "darkslategray", "gold2", 
+                   "orange2", "orchid", "wheat4", "pink2")
+
+pca_result <- prcomp(select(scatter_data2, -Clade, -Subtribe), scale = TRUE)
+scores <- as.data.frame(pca_result$x)
+scores$Clade <- DataJune8$Clade
+plot(scores[, 1], scores[, 2], col = as.factor(DataJune8$Clade), pch = 16, 
+     xlab = "PC1", ylab = "PC2", main = "PCA Plot")
+  legend("bottomright", legend = levels(DataJune8$Clade), col = 1:length(levels(DataJune8$Clade)), pch=16)
+
+  
+  
+pca.summary$rotation
+  # Set-up a multi-panel graph (2 rows, 3 columns), filling row by row
+  par(mfrow = c(2, 3), las = 2) 
+  
+  # Plot each of the six measurements in a different plot
+  boxplot(formula = SessileSpikeletLength.mean  ~ Clade, data = scatter_data2)
+  boxplot(formula = SessileSpikeletAwnLength.mean ~ Clade, data = scatter_data2)
+  boxplot(formula = Pedicellate1SpikeletLength.mean ~ Clade, data = scatter_data2)
+  boxplot(formula = Pedicellate1SpikeletAwnLength.mean ~ Clade, data = scatter_data2)
+  boxplot(formula = Pedicel1Length.mean ~ Clade, data = scatter_data2)
+  boxplot(formula = InternodeLength.mean ~ Clade, data = scatter_data2)
+  
+#August 2, 2023
+  
+#trying out scatterplot matrices using http://www.sthda.com/english/wiki/scatter-plot-matrices-r-base-graphs
+  
+#pairs(AggMeans[,9:11], pch=19)
+  
+  # Filter rows with SessileSpikeletAwnLength.mean = 0
+  filtered_tibble <- AggMeans %>%
+    filter(SessileSpikeletAwnLength.mean == 0)
+  pairs(filtered_tibble[,9:14], pch=19)
+  
+  # Convert the "Subtribe" column to a factor (if it's not already)
+  filtered_tibble$Subtribe <- as.factor(filtered_tibble$Subtribe)
+  
+  V3_AggMeans_Aug4 <- read_csv("V3.AggMeans.Aug4.csv")
+  
+  #convert Clade variable to a factor
+  V3_AggMeans_Aug4$Clade <- as.factor(V3_AggMeans_Aug4$Clade)
+  
+  #select numeric values
+  numeric_vars <- c("SessileSpikeletLength.mean", "SessileSpikeletAwnLength.mean", "Pedicellate1SpikeletLength.mean", "Pedicellate1SpikeletAwnLength.mean", "Pedicel1Length.mean", "InternodeLength.mean")
+  scatter_data <- select(V3_AggMeans_Aug4, Clade, all_of(numeric_vars))
+  
+  #perform PCA on selected numeric variables not Clade
+  pca_result <- prcomp(select(scatter_data, -Clade), scale = TRUE)
+  #extract scores from the PCA result
+  scores <- as.data.frame(pca_result$x)
+  #add the clade variable back to the scores data frame
+  scores$Clade <- V3_AggMeans_Aug4$Clade
+  #plot the PCA scores
+  plot(scores[, 1], scores[, 2], pch = 16, 
+       xlab = "PC1", ylab = "PC2", main = "PCA Plot")
+  
+#October 18, 2023
+  #display the PCA already done, but assign all specimens with SS awn length zero as one color
+  #and everything with awns a contrasting color and/or shape
+  
+#load data
+  AggMeans_Data_Oct18 <- read.csv("V3.AggMeans.Aug4.csv")
+  #convert Clade variable to a factor
+  #AggMeans_Data_Oct18$Clade <- as.factor(AggMeans_Data_Oct18$Clade)
+  #select numeric values
+  numeric_vars <- c("SessileSpikeletLength.mean", "SessileSpikeletAwnLength.mean", "Pedicellate1SpikeletLength.mean", "Pedicellate1SpikeletAwnLength.mean", "Pedicel1Length.mean", "InternodeLength.mean")
+  scatter_data <- select(AggMeans, all_of(numeric_vars))
+  
+  #ChatGPT help
+  install.packages("FactoMineR")
+  library(FactoMineR)  
+  # Create a column to indicate the color based on the condition
+  scatter_data$color <- ifelse(scatter_data$SessileSpikeletAwnLength.mean == 0, "SSAwnZero", "SSAwnNon-Zero")
+ 
+  # Perform PCA
+  pca_result <- PCA(scatter_data[, numeric_vars], graph = FALSE)
+  # Print the percentage of variance explained by the first two principal components
+  print(pca_result$eig[1:2, "percentage of variance"])
+  
+  # Plot PCA
+  ggplot(data = as.data.frame(pca_result$ind$coord), aes(x = Dim.1, y = Dim.2, color = scatter_data$color)) +
+    geom_point() +
+    labs(title = "PCA with Color Differentiation based on SessileSpikeletAwnLength.mean",
+         x = "PC1", y = "PC2", color = "Color") +
+    theme_minimal()
+  ggsave(filename = "pca_plot_oct18_SSAwnZero.png", plot = last_plot(), width = 8, height = 6)
+ 
+  
+#do a PCA with just the awnless taxa (i.e. ignore the awned stuff) 
+#and see if the awnless things fall into discrete groups that might correspond to genera  
+  
+  NoAwn_AggMeans_Oct18 <- read.csv("No_Awn_AggMeans_Oct18.csv")
+  summary(NoAwn_AggMeans_Oct18)
+  
+  # Select Genus column and columns 10 to 15 for PCA
+  selected_columns <- c("Genus", names(NoAwn_AggMeans_Oct18)[10:15])
+  pca_data <- NoAwn_AggMeans_Oct18[selected_columns]
+  #convert the Genus column to a factor
+  pca_data$Genus <- as.factor(pca_data$Genus)
+  # Perform PCA
+  pca_result <- PCA(pca_data[, -1], graph = FALSE)  # Exclude Genus for PCA
+  library(RColorBrewer)
+  
+  # Plot PCA with points colored by Genus
+  ggplot(data = as.data.frame(pca_result$ind$coord), aes(x = Dim.1, y = Dim.2, color = pca_data$Genus)) +
+    geom_point() +
+    labs(title = "PCA with Color by Genus",
+         x = "PC1", y = "PC2", color = "Genus") +
+    theme_minimal()
+  #scale_color_brewer(palette = "RdYlBu")
+   
+  # Print the percentage of variance explained by the first two principal components
+  print(pca_result$eig[1:2, "percentage of variance"])
+
+  ###repeat above but with Clade instead of Genus###
+  
+  # Select Genus column and columns 10 to 15 for PCA
+  selected_columns <- c("Clade", names(NoAwn_AggMeans_Oct18)[10:15])
+  pca_data <- NoAwn_AggMeans_Oct18[selected_columns]
+  #convert the Clade column to a factor
+  pca_data$Clade <- as.factor(pca_data$Clade)
+  # Perform PCA
+  pca_result <- PCA(pca_data[, -1], graph = FALSE)  # Exclude Clade for PCA
+  library(RColorBrewer)
+  
+  # Plot PCA with points colored by Clade
+  ggplot(data = as.data.frame(pca_result$ind$coord), aes(x = Dim.1, y = Dim.2, color = pca_data$Clade)) +
+    geom_point() +
+    labs(title = "PCA with Color by Clade",
+         x = "PC1", y = "PC2", color = "Clade") +
+    theme_minimal()
+  #scale_color_brewer(palette = "RdYlBu")
+  
+  # Print the percentage of variance explained by the first two principal components
+  print(pca_result$eig[1:2, "percentage of variance"])
+  
+#23 October
+#Chrissy's pick-up-sticks plot (doesn't include trendline) for zero awn values
+  #Using ChatGPT for guidance
+library(GGally)
+  library(ggplot2)
+df_select_columns <- c("Clade", names(NoAwn_AggMeans_Oct18)[10:15])
+df_data <- NoAwn_AggMeans_Oct18[df_select_columns]  
+df_data$Clade <- as.factor(df_data$Clade)  #make Clade a factor
+#create scatterplot matrix with ggpairs adding regression lines and R2 values
+ggpairs(df_data,
+        lower = list(continuous = wrap("points", alpha = 0.6, size = 2),
+                     combo = wrap("smooth", method = "lm", color = "grey"),
+                     title = "Scatterplot Matrix"),
+        upper = list(continuous = wrap("cor", size = 3),
+                     title = ""),
+        diag = list(continuous = wrap("barDiag", binwidth = 0.5, color = "grey")),
+        axisLabels = "show",
+        switch = "both",
+        cardinality_threshold = 18) #increase the threshold as needed for number of Clades in column
+ggsave(filename = "scatterplot_oct23_SSNoAwn.png", plot = last_plot(), width = 8, height = 6)
+#remove the SSAwn column of 0 values
+df_data <- df_data[, -which(names(df_data) == 'SessileSpikeletAwnLength.mean')]
+ggsave(filename = "scatterplot_B_oct23_SSNoAwn.png", plot = last_plot(), width = 8, height = 6)
+#make new scatterplot matrix to define only upper panels and color by Clade
+library(graphics)
+pairs(df_data, lower.panel = NULL)
+#remove Clade from the matrix but use it as the color code
+pairs(df_data[, -1], lower.panel = NULL, col = df_data$Clade
+      )
+
+###### 30 October
+
+df_data2 <- na.omit(df_data)
+
+# Create a scatterplot matrix with trend lines for each Clade
+pairs(df_data2[, -c(1,4)], lower.panel = NULL, col = df_data2$Clade)
+
+#ChatGPT to try to get trendlines on the plots
+
+library(ggplot2)
+library(gridExtra)
+library(GGally)
+
+# Create a scatterplot matrix without the first and fourth columns
+pairs_plot <- pairs(df_data2[, -c(1, 4)], lower.panel = NULL, col = df_data2$Clade)
+
+# Create a scatterplot matrix without the first and fourth columns
+#you can use ggpairs to store a scatterplot in an object (p) because pairs won't
+#p <- ggpairs(df_data2[, -c(1, 4)])
+#print(p)
+
+#using http://www.sthda.com/english/wiki/scatter-plot-matrices-r-base-graphs#use-the-r-package-psych tutorial
+pairs(df_data2, pch = 19)
+pairs(df_data2, pch = 19, lower.panel = NULL)
+my_cols <- c("coral", "chocolate", "cadetblue3", "brown4", "bisque4", "deeppink3", "cornflowerblue", "gold3", "indianred","darkblue", 
+             "rosybrown", "violet", "limegreen")
+pairs(df_data2[, -1], pch=19, cex = 0.5, 
+      col = my_cols[df_data2$Clade], lower.panel = NULL)
+#add correlations on the lower panels
+#correlation panel
+panel.cor <- function(x, y) {
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0,1,0,1))
+  r <- round(cor(x, y), digits = 2)
+  txt <- paste0("R = ", r)
+  cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt)
+}
+#customize upper panel
+upper.panel <- function(x, y){
+  points(x,y, pch = 19, col = my_cols[df_data2$Clade])
+}
+
+panel.lm <- function (x, y,  pch = par("pch"), col.lm = "red",  ...) {   
+  ymin <- min(y)
+  ymax <- max(y)
+  xmin <- min(x)
+  xmax <- max(x)
+  ylim <- c(min(ymin,xmin),max(ymax,xmax))
+  xlim <- ylim
+  points(x, y, pch = pch,ylim = ylim, xlim= xlim,...)
+  ok <- is.finite(x) & is.finite(y)
+  if (any(ok)) 
+    abline(lm(y[ok]~ x[ok]), 
+           col = col.lm, ...)
+}
+#create the plots
+pairs(df_data2[,2:4],
+      panel = panel.lm,
+      #lower.panel = panel.cor,
+      upper.panel = upper.panel)
+
+#########################################################
+
+# November 10 PCA
+
+#Scatterplot matrix for spikelet data
+library(corrplot)
+library(RColorBrewer)
+library(psych)
+library(ggcorrplot)
+library(tidyverse)
+library(dplyr)
+
+AggMeans_full <- V3_AggMeans_Aug4
+AggMeans_NoAwn <- No_Awn_AggMeans_Oct18
+
+#convert Clade variable to a factor
+AggMeans_full$Clade <- as.factor(AggMeans_full$Clade)
+
+#select numeric values
+numeric_vars1 <- c("SessileSpikeletLength.mean", "SessileSpikeletAwnLength.mean", "Pedicellate1SpikeletLength.mean", "Pedicellate1SpikeletAwnLength.mean", "Pedicel1Length.mean", "InternodeLength.mean")
+
+scatter_data1 <- select(AggMeans_full, all_of(numeric_vars1))
+scatter_data2 <- select(AggMeans_full, SessileSpikeletLength.mean, SessileSpikeletAwnLength.mean, Pedicellate1SpikeletLength.mean, Pedicellate1SpikeletAwnLength.mean, Pedicel1Length.mean, InternodeLength.mean)
+
+head(scatter_data1)
+scatter_fullAgg1 <- pairs(scatter_data1)
+#ggsave("multivar_scatterplot1.png", width = 10.91,height = 9.55,plot = scatter1, dpi = 300)
+#scatter2 <- pairs.panels(scatter_data)
+#ggsave("multivar_scatter2.png", width = 10.91, height = 9.55, plot = scatter2, dpi = 300)
+
+#PCA
+pca.fit <- prcomp(x = scatter_data1, na.omit(scatter_data1), scale = TRUE)
+pca.summary <- summary(pca.fit)
+ls(pca.summary)
+#We are interested to know (1) what are the important factors that emerge from the PCA (i.e. which ones explain a lot of variation) and (2) what do these factors actually say about the variation observed in our data. For (1), look at the importance object in the summary:
+pca.summary$importance
+
+#plot the PCA
+biplot(x = pca.fit)
+#too messy with so many samples
+?biplot
+#pull out clade names from the data as a vector
+clades <- unique(DataJune8$Clade)
+clades
+legend.colors <- c("aquamarine3", "blue4", "blueviolet", "burlywood", "coral1", "chartreuse3", 
+                   "cyan3", "darkgoldenrod", "darkgreen", "darkred", "darkslategray", "gold2", 
+                   "orange2", "orchid", "wheat4", "pink2")
+
+#plot first 2 principal components
+plot(x = pca.fit$x[, 1],
+     y = pca.fit$x[, 2],
+     xlab = "PC 1",
+     ylab = "PC 2")
+
+pt.cols <- rep(x = legend.colors[1], length = nrow(scatter_data))
+pt.cols(scatter_data)
